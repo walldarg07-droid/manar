@@ -3,246 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>إليكِ.. 💙</title>
+    <title>منار.. قصة لا تنتهي 💙</title>
     <style>
-        :root {
-            --primary-color: #4fc3f7;
-            --text-color: #e0e1dd;
-        }
-
-        body {
-            margin: 0;
-            background: #000;
-            overflow: hidden;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            touch-action: none;
-        }
-
-        /* شاشة البداية الغامضة */
-        #overlay {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at center, #001219 0%, #000 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 2s ease;
-        }
-
-        .start-circle {
-            width: 100px;
-            height: 100px;
-            border: 1px solid var(--primary-color);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--primary-color);
-            font-size: 0.9rem;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(79, 195, 247, 0.2);
-            animation: breath 3s infinite ease-in-out;
-        }
-
-        @keyframes breath {
-            0%, 100% { transform: scale(1); opacity: 0.4; }
-            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 40px rgba(79, 195, 247, 0.4); }
-        }
-
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Tahoma', sans-serif; }
         canvas { display: block; }
 
-        /* طبقة المشاعر */
-        .story-container {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-            padding: 40px;
-            text-align: center;
+        #gate {
+            position: fixed; inset: 0; background: #000; z-index: 100;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+        .gate-btn {
+            color: #4fc3f7; border: 1px solid #4fc3f7; padding: 15px 40px;
+            border-radius: 30px; font-size: 1.2rem; box-shadow: 0 0 15px rgba(79, 195, 247, 0.3);
         }
 
-        .fade-text {
-            opacity: 0;
-            transition: opacity 1.5s ease, transform 1.5s ease;
-            transform: translateY(10px);
-            color: var(--text-color);
-            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        #story-layer {
+            position: fixed; inset: 0; display: flex; justify-content: center;
+            align-items: center; pointer-events: none; z-index: 10;
         }
 
-        .name-highlight {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 30px;
-            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.5));
+        .message {
+            position: absolute; color: white; text-align: center;
+            opacity: 0; transition: opacity 2s, transform 2s; max-width: 85%;
         }
 
-        .quote-text {
-            font-size: 1.3rem;
-            line-height: 1.8;
-            letter-spacing: 1px;
-        }
-
-        #final-heart {
-            position: absolute;
-            font-size: 80px;
-            opacity: 0;
-            transition: 3s ease;
-            filter: drop-shadow(0 0 20px var(--primary-color));
+        /* رسالة الحب النهائية */
+        #final-love-note {
+            position: absolute; bottom: 15%; width: 100%; text-align: center;
+            color: #4fc3f7; font-size: 1.3rem; opacity: 0; transition: 4s;
+            line-height: 1.8; text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+            padding: 0 20px; box-sizing: border-box;
         }
     </style>
 </head>
 <body>
 
-<div id="overlay" onclick="startJourney()">
-    <div class="start-circle">المس القلب</div>
+<div id="gate" onclick="initExperience()">
+    <div class="gate-btn">ادخلي الى  عالمي ✨</div>
 </div>
 
-<canvas id="scene"></canvas>
-
-<div class="story-container">
-    <div id="name-part" class="fade-text name-highlight">منار المادي</div>
-    <div id="text-part" class="fade-text quote-text"></div>
-    <div id="final-heart">💙</div>
+<div id="story-layer">
+    <div class="message" id="m1" style="font-size: 1.5rem;">في هذا الكون الواسع.. كانت الصدفة هي البداية</div>
+    <div class="message" id="m2" style="font-size: 1.5rem;">لم تكوني يوماً رقماً في سجل هاتفي..</div>
+    <div class="message" id="m3" style="font-size: 1.5rem;">بل كنتِ النور الذي أضاء عتمة أيامي</div>
+    <div class="message" id="m4" style="font-size: 3.5rem; font-weight: bold; color: #4fc3f7;">منار المادي</div>
 </div>
 
-<audio id="music" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/02/22/audio_d1be8269e0.mp3" type="audio/mpeg">
+<div id="final-love-note">
+    "أنتِ الوردة التي ستبقى تُزهر في قلبي،<br>
+    بيننا مسافات.. لكنكِ أقرب إليّ من نبضي. 💙"
+</div>
+
+<audio id="audio" loop>
+    <source src="music.mpeg" type="audio/mpeg">
 </audio>
 
-<script>
-    const canvas = document.getElementById('scene');
-    const ctx = canvas.getContext('2d');
-    const music = document.getElementById('music');
-    let particles = [];
-    let touch = { x: -100, y: -100 };
+<canvas id="canvas"></canvas>
 
-    // تهيئة الشاشة
-    function init() {
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let state = "intro"; 
+    let startTime = 0;
+
+    function setup() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
     class Particle {
         constructor(x, y, tx, ty) {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.tx = tx;
-            this.ty = ty;
+            this.x = x; this.y = y;
+            this.tx = tx; this.ty = ty;
             this.size = Math.random() * 1.5 + 0.5;
             this.acc = 0.05;
-            this.v = 0.9;
         }
-
-        draw() {
-            ctx.fillStyle = '#4fc3f7';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
         update() {
             this.x += (this.tx - this.x) * this.acc;
             this.y += (this.ty - this.y) * this.acc;
-            
-            // تفاعل بسيط عند اللمس
-            let dx = touch.x - this.x;
-            let dy = touch.y - this.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if(dist < 60) {
-                this.x -= dx * 0.1;
-                this.y -= dy * 0.1;
-            }
+        }
+        draw() {
+            ctx.fillStyle = "#4fc3f7";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
         }
     }
 
-    function createName() {
+    async function showMessage(id, duration) {
+        const el = document.getElementById(id);
+        el.style.opacity = 1;
+        el.style.transform = "translateY(-20px)";
+        await new Promise(r => setTimeout(r, duration));
+        el.style.opacity = 0;
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
+    function createNameParticles() {
+        particles = [];
         ctx.fillStyle = "white";
-        ctx.font = `bold ${Math.min(canvas.width * 0.22, 90)}px Tahoma`;
+        ctx.font = `bold ${Math.min(canvas.width*0.22, 85)}px Tahoma`;
         ctx.textAlign = "center";
         ctx.fillText("منار", canvas.width/2, canvas.height/2);
+        
+        const data = ctx.getImageData(0,0,canvas.width, canvas.height).data;
+        ctx.clearRect(0,0,canvas.width, canvas.height);
 
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let y = 0; y < canvas.height; y += 6) {
-            for (let x = 0; x < canvas.width; x += 6) {
-                if (data[(y * canvas.width + x) * 4 + 3] > 128) {
-                    particles.push(new Particle(x, y, x, y));
+        for(let y=0; y<canvas.height; y+=6) {
+            for(let x=0; x<canvas.width; x+=6) {
+                if(data[(y*canvas.width + x)*4 + 3] > 128) {
+                    particles.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, x, y));
                 }
             }
         }
     }
 
+    // دالة رسم الوردة الرياضية
+    function transitionToRose() {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2 - 50;
+        const k = 5; // عدد البتلات
+        const scale = Math.min(canvas.width, canvas.height) * 0.35;
+
+        particles.forEach((p, index) => {
+            let t = (index / particles.length) * Math.PI * 2 * 2;
+            let r = scale * Math.cos(k * t);
+            let tx = centerX + r * Math.cos(t);
+            let ty = centerY + r * Math.sin(t);
+            
+            p.tx = tx;
+            p.ty = ty;
+            p.acc = 0.08; // حركة أهدأ عند رسم الوردة
+        });
+
+        // تشغيل الاهتزاز النبضي
+        setInterval(() => {
+            if (navigator.vibrate) navigator.vibrate([100, 150]);
+        }, 1500);
+
+        // إظهار الرسالة الرومانسية
+        setTimeout(() => {
+            document.getElementById('final-love-note').style.opacity = 1;
+        }, 2000);
+    }
+
     function animate() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         particles.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(animate);
     }
 
-    async function playStory() {
-        const namePart = document.getElementById('name-part');
-        const textPart = document.getElementById('text-part');
-        const heart = document.getElementById('final-heart');
-
-        // المرحلة 1: ظهور الاسم
-        await new Promise(r => setTimeout(r, 1000));
-        namePart.style.opacity = 1;
-        namePart.style.transform = "translateY(0)";
-
-        // المرحلة 2: الكلمات المتتالية
-        const phrases = [
-            "في زحام الأصوات..",
-            "كان صوتكِ هو السكينة.",
-            "لم تكوني يوماً مجرد عابر..",
-            "بل كنتِ الأثر الذي غيّر مجرى القصة."
-        ];
-
-        for (let p of phrases) {
-            textPart.style.opacity = 0;
-            await new Promise(r => setTimeout(r, 1000));
-            textPart.innerText = p;
-            textPart.style.opacity = 1;
-            await new Promise(r => setTimeout(r, 3000));
-        }
-
-        // المرحلة النهائية: النبض والختام
-        namePart.style.opacity = 0;
-        textPart.style.opacity = 0;
-        await new Promise(r => setTimeout(r, 2000));
-        
-        heart.style.opacity = 1;
-        heart.style.transform = "scale(1.5)";
-        
-        // محاكاة نبض القلب بالاهتزاز
-        setInterval(() => {
-            if ("vibrate" in navigator) navigator.vibrate([100, 100]);
-        }, 2000);
-    }
-
-    function startJourney() {
-        document.getElementById('overlay').style.opacity = 0;
-        setTimeout(() => document.getElementById('overlay').remove(), 2000);
-        
-        music.volume = 0.6;
-        music.play();
-        
-        init();
-        createName();
+    async function initExperience() {
+        document.getElementById('gate').style.display = "none";
+        document.getElementById('audio').play();
+        setup();
         animate();
-        playStory();
+
+        await showMessage('m1', 4000);
+        await showMessage('m2', 4000);
+        await showMessage('m3', 4000);
+        
+        createNameParticles();
+        await showMessage('m4', 6000);
+        
+        // الانتقال للوردة
+        transitionToRose();
     }
 
-    window.addEventListener('touchstart', (e) => {
-        touch.x = e.touches[0].clientX;
-        touch.y = e.touches[0].clientY;
-    });
+    window.onresize = setup;
 </script>
-
 </body>
 </html>
