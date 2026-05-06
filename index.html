@@ -9,235 +9,190 @@
             margin: 0;
             background: #000;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Tahoma', sans-serif;
             color: #fff;
-            touch-action: none; /* لمنع المتصفح من سحب الصفحة عند اللمس */
+            touch-action: none;
         }
 
+        /* شاشة البدء - ضرورية لتفعيل الصوت والاهتزاز */
         .start-overlay {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at center, #001219 0%, #000 100%);
+            background: #000;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
-            transition: 1s ease-out;
+            z-index: 10000;
         }
 
-        .pulse-text {
+        .start-btn {
+            padding: 20px 40px;
+            border: 2px solid #4fc3f7;
+            border-radius: 50px;
             color: #4fc3f7;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            animation: pulse 2s infinite;
-            border: 1px solid #4fc3f7;
-            padding: 12px 30px;
-            border-radius: 30px;
-            background: rgba(79, 195, 247, 0.05);
+            font-size: 1.5rem;
+            background: rgba(79, 195, 247, 0.1);
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.5; transform: scale(0.95); }
-            50% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0.5; transform: scale(0.95); }
-        }
+        canvas { display: block; position: absolute; top: 0; left: 0; }
 
-        canvas { display: block; }
-
-        .ui-layer {
+        /* تنظيم النصوص لمنع الالتصاق */
+        .content-container {
             position: absolute;
             inset: 0;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
+            justify-content: space-between; /* توزيع العناصر بعيداً عن بعضها */
             align-items: center;
+            padding: 60px 20px;
             pointer-events: none;
-            padding: 20px;
+            box-sizing: border-box;
         }
 
         .main-name {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(79, 195, 247, 0.8);
+            font-size: 3rem;
+            margin: 0;
+            color: #4fc3f7;
+            text-shadow: 0 0 20px #0288d1;
             opacity: 0;
-            transform: translateY(20px);
-            transition: 3s all ease;
+            transition: 3s;
         }
 
-        .typewriter-box {
-            font-size: 1.2rem;
-            color: #cfd8dc;
+        .typewriter-text {
+            font-size: 1.1rem;
+            color: #e0e0e0;
             text-align: center;
-            min-height: 3em;
-            line-height: 1.6;
+            line-height: 1.8;
+            max-width: 90%;
+            min-height: 4em; /* مساحة ثابتة لمنع القفز */
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
 
-<div class="start-overlay" id="startScreen" onclick="startMobileExp()">
-    <div class="pulse-text">اضغط لتبدأ التجربة ✨</div>
+<div class="start-overlay" id="overlay" onclick="launch()">
+    <div class="start-btn">بدء التجربة ✨</div>
 </div>
 
-<canvas id="mobileCanvas"></canvas>
+<canvas id="stage"></canvas>
 
-<div class="ui-layer">
-    <h1 id="nameEl" class="main-name">منار المادي</h1>
-    <div id="textEl" class="typewriter-box"></div>
+<div class="content-container">
+    <h1 id="nameDisplay" class="main-name">منار المادي</h1>
+    <div id="textDisplay" class="typewriter-text"></div>
 </div>
 
-<audio id="audio" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8f1b0a8c2.mp3" type="audio/mpeg">
+<!-- رابط موسيقى بديل ومباشر لضمان العمل -->
+<audio id="player" crossorigin="anonymous" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-    const canvas = document.getElementById('mobileCanvas');
+    const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
-    const nameEl = document.getElementById('nameEl');
-    const textEl = document.getElementById('textEl');
+    const audio = document.getElementById('player');
     
     let particles = [];
-    let touch = { x: -100, y: -100, active: false };
+    let isStarted = false;
 
-    // التعامل مع اللمس في الأندرويد
-    window.addEventListener('touchstart', (e) => {
-        touch.x = e.touches[0].clientX;
-        touch.y = e.touches[0].clientY;
-        touch.active = true;
-    });
-
-    window.addEventListener('touchmove', (e) => {
-        touch.x = e.touches[0].clientX;
-        touch.y = e.touches[0].clientY;
-    });
-
-    window.addEventListener('touchend', () => {
-        touch.active = false;
-    });
-
-    function initCanvas() {
+    function init() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
-    class Star {
-        constructor(x, y, tx, ty) {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.tx = tx;
-            this.ty = ty;
-            this.size = Math.random() * 1.5 + 0.5;
-            this.friction = 0.95;
-            this.ease = 0.05;
-        }
-
-        draw() {
-            ctx.fillStyle = '#4fc3f7';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        update() {
-            // العودة للمكان الأصلي
-            this.x += (this.tx - this.x) * this.ease;
-            this.y += (this.ty - this.y) * this.ease;
-
-            // التفاعل مع لمس الإصبع
-            if (touch.active) {
-                let dx = touch.x - this.x;
-                let dy = touch.y - this.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 80) {
-                    let angle = Math.atan2(dy, dx);
-                    this.x -= Math.cos(angle) * 10;
-                    this.y -= Math.sin(angle) * 10;
-                }
-            }
+    // دالة الاهتزاز مع تكرار لضمان عملها على أندرويد
+    function triggerVibration() {
+        if ("vibrate" in navigator) {
+            navigator.vibrate([100, 50, 100]); 
         }
     }
 
-    function createText() {
-        ctx.fillStyle = 'white';
-        // حجم الخط يعتمد على عرض الشاشة
-        let fontSize = canvas.width > 500 ? 120 : canvas.width * 0.25;
-        ctx.font = `bold ${fontSize}px Tahoma`;
-        ctx.textAlign = 'center';
-        ctx.fillText('منار', canvas.width / 2, canvas.height / 2);
+    function createParticles() {
+        ctx.fillStyle = "white";
+        let size = Math.min(canvas.width * 0.2, 80);
+        ctx.font = `bold ${size}px Tahoma`;
+        ctx.textAlign = "center";
+        ctx.fillText("منار", canvas.width/2, canvas.height/2);
 
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         particles = [];
-        // تقليل الكثافة للهواتف لضمان السلاسة
-        let gap = 7; 
-        for (let y = 0; y < canvas.height; y += gap) {
-            for (let x = 0; x < canvas.width; x += gap) {
-                let i = (y * canvas.width + x) * 4;
-                if (data[i + 3] > 128) {
-                    particles.push(new Star(x, y, x, y));
+        for (let y = 0; y < canvas.height; y += 6) {
+            for (let x = 0; x < canvas.width; x += 6) {
+                const i = (y * canvas.width + x) * 4;
+                if (imgData[i+3] > 128) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        tx: x, ty: y,
+                        vx: 0, vy: 0
+                    });
                 }
             }
         }
     }
 
-    function animate() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // لترك أثر خفيف وجميل
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
+        ctx.fillStyle = "#4fc3f7";
         particles.forEach(p => {
-            p.update();
-            p.draw();
+            p.x += (p.tx - p.x) * 0.07;
+            p.y += (p.ty - p.y) * 0.07;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+            ctx.fill();
         });
-        requestAnimationFrame(animate);
+        requestAnimationFrame(draw);
     }
 
-    const script = [
-        "أهلاً  بكِ  في  عالمي  الصغير...",
-        "حيث  كانت  مجرد  مكالمة  عابرة..",
-        "لكن  نبضكِ  جعل  لها  قصة  لا  تنتهي.",
-        "منار ... شكراً  لأنكِ  هنا. 💙"
-    ];
-
-    async function runScript() {
-        nameEl.style.opacity = '1';
-        nameEl.style.transform = 'translateY(0)';
+    async function runText() {
+        const lines = [
+            "كانت مجرد مكالمة عابرة...",
+            "لكنها صنعت قصة لن تنتهي.",
+            "منار... وجودكِ يضيء كل شيء. 💙"
+        ];
         
-        for (let phrase of script) {
-            textEl.style.opacity = '0';
-            await new Promise(r => setTimeout(r, 500));
-            textEl.innerText = '';
-            textEl.style.opacity = '1';
-            
-            for (let char of phrase) {
-                textEl.innerText += char;
-                await new Promise(r => setTimeout(r, 70));
+        const display = document.getElementById('textDisplay');
+        document.getElementById('nameDisplay').style.opacity = "1";
+
+        for (let line of lines) {
+            display.innerText = "";
+            for (let char of line) {
+                display.innerText += char;
+                await new Promise(r => setTimeout(r, 60));
             }
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 2500));
         }
     }
 
-    function startMobileExp() {
-        document.getElementById('startScreen').style.opacity = '0';
-        setTimeout(() => document.getElementById('startScreen').remove(), 1000);
+    function launch() {
+        if (isStarted) return;
+        isStarted = true;
+
+        // إخفاء الشاشة وتفعيل الصوت
+        document.getElementById('overlay').style.display = "none";
         
-        const audio = document.getElementById('audio');
-        audio.volume = 0.5;
-        audio.play();
+        // محاولة تشغيل الصوت
+        audio.play().catch(e => console.log("Audio failed:", e));
+        
+        // تفعيل الاهتزاز
+        triggerVibration();
 
-        if (navigator.vibrate) navigator.vibrate(50);
-
-        initCanvas();
-        createText();
-        animate();
-        runScript();
+        init();
+        createParticles();
+        draw();
+        runText();
     }
 
     window.addEventListener('resize', () => {
-        initCanvas();
-        createText();
+        if (isStarted) {
+            init();
+            createParticles();
+        }
     });
 </script>
 
