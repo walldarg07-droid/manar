@@ -14,7 +14,7 @@
             touch-action: none;
         }
 
-        /* شاشة البدء - ضرورية لتفعيل الصوت والاهتزاز */
+        /* شاشة البدء */
         .start-overlay {
             position: fixed;
             inset: 0;
@@ -26,172 +26,175 @@
         }
 
         .start-btn {
-            padding: 20px 40px;
+            padding: 15px 45px;
             border: 2px solid #4fc3f7;
             border-radius: 50px;
             color: #4fc3f7;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             background: rgba(79, 195, 247, 0.1);
-            box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
         }
 
         canvas { display: block; position: absolute; top: 0; left: 0; }
 
-        /* تنظيم النصوص لمنع الالتصاق */
-        .content-container {
+        /* حاوية النصوص مع معالجة المسافات */
+        .ui-container {
             position: absolute;
             inset: 0;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* توزيع العناصر بعيداً عن بعضها */
+            justify-content: center; /* توسيط عمودي */
             align-items: center;
-            padding: 60px 20px;
             pointer-events: none;
-            box-sizing: border-box;
+            z-index: 5;
         }
 
-        .main-name {
+        .name-header {
             font-size: 3rem;
-            margin: 0;
             color: #4fc3f7;
-            text-shadow: 0 0 20px #0288d1;
+            text-shadow: 0 0 15px rgba(79, 195, 247, 0.6);
             opacity: 0;
-            transition: 3s;
+            margin-bottom: 40px; /* مسافة إجبارية تحت الاسم */
+            transition: 2s ease;
         }
 
-        .typewriter-text {
-            font-size: 1.1rem;
+        /* تعديل المسافات بين كلمات الجملة الواحدة */
+        .typewriter-content {
+            font-size: 1.2rem;
             color: #e0e0e0;
             text-align: center;
             line-height: 1.8;
-            max-width: 90%;
-            min-height: 4em; /* مساحة ثابتة لمنع القفز */
-            margin-bottom: 20px;
+            max-width: 85%;
+            word-spacing: 4px; /* إضافة مساحة إضافية بين الكلمات */
+            letter-spacing: 0.5px;
+            min-height: 4em;
         }
     </style>
 </head>
 <body>
 
-<div class="start-overlay" id="overlay" onclick="launch()">
-    <div class="start-btn">بدء التجربة ✨</div>
+<div class="start-overlay" id="overlay" onclick="bootExperience()">
+    <div class="start-btn">ابدأ التجربة ✨</div>
 </div>
 
-<canvas id="stage"></canvas>
+<canvas id="galaxy"></canvas>
 
-<div class="content-container">
-    <h1 id="nameDisplay" class="main-name">منار المادي</h1>
-    <div id="textDisplay" class="typewriter-text"></div>
+<div class="ui-container">
+    <h1 id="mainTitle" class="name-header">منار المادي</h1>
+    <div id="subText" class="typewriter-content"></div>
 </div>
 
-<!-- رابط موسيقى بديل ومباشر لضمان العمل -->
-<audio id="player" crossorigin="anonymous" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+<!-- رابط صوت بديل وموثوق -->
+<audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02d9.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-    const canvas = document.getElementById('stage');
+    const canvas = document.getElementById('galaxy');
     const ctx = canvas.getContext('2d');
-    const audio = document.getElementById('player');
+    const music = document.getElementById('bgMusic');
     
     let particles = [];
-    let isStarted = false;
+    let isLive = false;
 
-    function init() {
+    function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
-    // دالة الاهتزاز مع تكرار لضمان عملها على أندرويد
-    function triggerVibration() {
-        if ("vibrate" in navigator) {
-            navigator.vibrate([100, 50, 100]); 
-        }
-    }
-
-    function createParticles() {
+    function createStars() {
         ctx.fillStyle = "white";
-        let size = Math.min(canvas.width * 0.2, 80);
-        ctx.font = `bold ${size}px Tahoma`;
+        let fontSize = Math.min(canvas.width * 0.2, 70);
+        ctx.font = `bold ${fontSize}px Tahoma`;
         ctx.textAlign = "center";
         ctx.fillText("منار", canvas.width/2, canvas.height/2);
 
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         particles = [];
-        for (let y = 0; y < canvas.height; y += 6) {
-            for (let x = 0; x < canvas.width; x += 6) {
+        for (let y = 0; y < canvas.height; y += 7) {
+            for (let x = 0; x < canvas.width; x += 7) {
                 const i = (y * canvas.width + x) * 4;
-                if (imgData[i+3] > 128) {
+                if (data[i+3] > 128) {
                     particles.push({
                         x: Math.random() * canvas.width,
                         y: Math.random() * canvas.height,
-                        tx: x, ty: y,
-                        vx: 0, vy: 0
+                        tx: x, ty: y
                     });
                 }
             }
         }
     }
 
-    function draw() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    function render() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = "#4fc3f7";
         particles.forEach(p => {
-            p.x += (p.tx - p.x) * 0.07;
-            p.y += (p.ty - p.y) * 0.07;
+            p.x += (p.tx - p.x) * 0.08;
+            p.y += (p.ty - p.y) * 0.08;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+            ctx.arc(p.x, p.y, 1.2, 0, Math.PI*2);
             ctx.fill();
         });
-        requestAnimationFrame(draw);
+        requestAnimationFrame(render);
     }
 
-    async function runText() {
-        const lines = [
-            "كانت مجرد مكالمة عابرة...",
-            "لكنها صنعت قصة لن تنتهي.",
-            "منار... وجودكِ يضيء كل شيء. 💙"
+    async function startStory() {
+        const phrases = [
+            "كانت مجرد مكالمة عادية...",
+            "لكنها تحولت إلى أجمل قصة.",
+            "منار... وجودكِ يملأ المكان نوراً. 💙"
         ];
         
-        const display = document.getElementById('textDisplay');
-        document.getElementById('nameDisplay').style.opacity = "1";
+        const textEl = document.getElementById('subText');
+        document.getElementById('mainTitle').style.opacity = "1";
 
-        for (let line of lines) {
-            display.innerText = "";
-            for (let char of line) {
-                display.innerText += char;
-                await new Promise(r => setTimeout(r, 60));
+        for (let phrase of phrases) {
+            textEl.innerText = "";
+            // إضافة مسافات واضحة أثناء الكتابة
+            for (let char of phrase) {
+                textEl.innerText += char;
+                await new Promise(r => setTimeout(r, 80));
             }
             await new Promise(r => setTimeout(r, 2500));
         }
     }
 
-    function launch() {
-        if (isStarted) return;
-        isStarted = true;
+    function bootExperience() {
+        if (isLive) return;
+        isLive = true;
 
-        // إخفاء الشاشة وتفعيل الصوت
         document.getElementById('overlay').style.display = "none";
         
-        // محاولة تشغيل الصوت
-        audio.play().catch(e => console.log("Audio failed:", e));
-        
-        // تفعيل الاهتزاز
-        triggerVibration();
+        // تشغيل الموسيقى - الأندرويد يتطلب تفاعل المستخدم أولاً
+        music.play().catch(() => {
+            console.log("المتصفح منع التشغيل التلقائي");
+        });
 
-        init();
-        createParticles();
-        draw();
-        runText();
+        // تشغيل الاهتزاز (تأكد أن الهاتف ليس في وضع الصامت)
+        if ("vibrate" in navigator) {
+            navigator.vibrate([200, 100, 200]);
+        }
+
+        resize();
+        createStars();
+        render();
+        startStory();
     }
 
     window.addEventListener('resize', () => {
-        if (isStarted) {
-            init();
-            createParticles();
+        if (isLive) {
+            resize();
+            createStars();
         }
     });
 </script>
