@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>منار 💙</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            touch-action: none; /* لمنع المتصفح من سحب الصفحة عند اللمس */
+        }
+
+        .start-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #001219 0%, #000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: 1s ease-out;
+        }
+
+        .pulse-text {
+            color: #4fc3f7;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+            border: 1px solid #4fc3f7;
+            padding: 12px 30px;
+            border-radius: 30px;
+            background: rgba(79, 195, 247, 0.05);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(0.95); }
+        }
+
+        canvas { display: block; }
+
+        .ui-layer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            pointer-events: none;
+            padding: 20px;
+        }
+
+        .main-name {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(79, 195, 247, 0.8);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: 3s all ease;
+        }
+
+        .typewriter-box {
+            font-size: 1.2rem;
+            color: #cfd8dc;
+            text-align: center;
+            min-height: 3em;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="start-overlay" id="startScreen" onclick="startMobileExp()">
+    <div class="pulse-text">اضغط لتبدأ التجربة ✨</div>
+</div>
+
+<canvas id="mobileCanvas"></canvas>
+
+<div class="ui-layer">
+    <h1 id="nameEl" class="main-name">منار المادي</h1>
+    <div id="textEl" class="typewriter-box"></div>
+</div>
+
+<audio id="audio" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8f1b0a8c2.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    const canvas = document.getElementById('mobileCanvas');
+    const ctx = canvas.getContext('2d');
+    const nameEl = document.getElementById('nameEl');
+    const textEl = document.getElementById('textEl');
+    
+    let particles = [];
+    let touch = { x: -100, y: -100, active: false };
+
+    // التعامل مع اللمس في الأندرويد
+    window.addEventListener('touchstart', (e) => {
+        touch.x = e.touches[0].clientX;
+        touch.y = e.touches[0].clientY;
+        touch.active = true;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        touch.x = e.touches[0].clientX;
+        touch.y = e.touches[0].clientY;
+    });
+
+    window.addEventListener('touchend', () => {
+        touch.active = false;
+    });
+
+    function initCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    class Star {
+        constructor(x, y, tx, ty) {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.tx = tx;
+            this.ty = ty;
+            this.size = Math.random() * 1.5 + 0.5;
+            this.friction = 0.95;
+            this.ease = 0.05;
+        }
+
+        draw() {
+            ctx.fillStyle = '#4fc3f7';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        update() {
+            // العودة للمكان الأصلي
+            this.x += (this.tx - this.x) * this.ease;
+            this.y += (this.ty - this.y) * this.ease;
+
+            // التفاعل مع لمس الإصبع
+            if (touch.active) {
+                let dx = touch.x - this.x;
+                let dy = touch.y - this.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 80) {
+                    let angle = Math.atan2(dy, dx);
+                    this.x -= Math.cos(angle) * 10;
+                    this.y -= Math.sin(angle) * 10;
+                }
+            }
+        }
+    }
+
+    function createText() {
+        ctx.fillStyle = 'white';
+        // حجم الخط يعتمد على عرض الشاشة
+        let fontSize = canvas.width > 500 ? 120 : canvas.width * 0.25;
+        ctx.font = `bold ${fontSize}px Tahoma`;
+        ctx.textAlign = 'center';
+        ctx.fillText('منار', canvas.width / 2, canvas.height / 2);
+
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles = [];
+        // تقليل الكثافة للهواتف لضمان السلاسة
+        let gap = 7; 
+        for (let y = 0; y < canvas.height; y += gap) {
+            for (let x = 0; x < canvas.width; x += gap) {
+                let i = (y * canvas.width + x) * 4;
+                if (data[i + 3] > 128) {
+                    particles.push(new Star(x, y, x, y));
+                }
+            }
+        }
+    }
+
+    function animate() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // لترك أثر خفيف وجميل
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        requestAnimationFrame(animate);
+    }
+
+    const script = [
+        "أهلاً  بكِ  في  عالمي  الصغير...",
+        "حيث  كانت  مجرد  مكالمة  عابرة..",
+        "لكن  نبضكِ  جعل  لها  قصة  لا  تنتهي.",
+        "منار ... شكراً  لأنكِ  هنا. 💙"
+    ];
+
+    async function runScript() {
+        nameEl.style.opacity = '1';
+        nameEl.style.transform = 'translateY(0)';
+        
+        for (let phrase of script) {
+            textEl.style.opacity = '0';
+            await new Promise(r => setTimeout(r, 500));
+            textEl.innerText = '';
+            textEl.style.opacity = '1';
+            
+            for (let char of phrase) {
+                textEl.innerText += char;
+                await new Promise(r => setTimeout(r, 70));
+            }
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+
+    function startMobileExp() {
+        document.getElementById('startScreen').style.opacity = '0';
+        setTimeout(() => document.getElementById('startScreen').remove(), 1000);
+        
+        const audio = document.getElementById('audio');
+        audio.volume = 0.5;
+        audio.play();
+
+        if (navigator.vibrate) navigator.vibrate(50);
+
+        initCanvas();
+        createText();
+        animate();
+        runScript();
+    }
+
+    window.addEventListener('resize', () => {
+        initCanvas();
+        createText();
+    });
+</script>
+
+</body>
+</html>
